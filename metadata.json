@@ -1,0 +1,7 @@
+{
+  "name": "DrawLift - AI Architecture CAD & 3D Floor Plan Converter",
+  "description": "Convert architecture and floor plan PDFs to 2D DXF/DWG CAD models and interactive 3D extruded BIM/GLB floor plans.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

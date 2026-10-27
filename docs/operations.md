@@ -1,0 +1,240 @@
+# Operations
+
+This document summarizes local operations for DrawLift.
+
+## Environment
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Important variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | SQLAlchemy async PostgreSQL URL. |
+| `REDIS_URL` | Redis URL for Celery and Pub/Sub. |
+| `STORAGE_PATH` | Root for uploaded/generated files. |
+| `STORAGE_TTL_DAYS` | Cleanup/archive threshold. |
+| `MODELS_PATH` | ONNX/model cache directory. |
+| `SEGMENTER_MODEL_PATH` | Optional explicit path to the segmentation ONNX model. |
+| `SEGMENTER_MODEL_URL` | Optional http(s) URL used to auto-download the segmentation model when the file is missing. |
+| `SEGMENTER_MODEL_INPUT_SIZE` | ONNX model input resolution side length in pixels (default `128`). Lower = less memory. |
+| `DWG_CONVERTER_COMMAND` | Optional external DWG conversion command template. |
+| `CORS_ORIGINS` | Allowed frontend origins. |
+| `NEXT_PUBLIC_API_URL` | Browser-visible API base URL. |
+| `JOB_STALE_TIMEOUT_SECONDS` | Seconds a job may stay in `processing` before being marked `failed` (default 300). |
+| `WORKER_MEM_LIMIT` | Docker memory limit for the Celery worker (default `4g`). |
+| `WORKER_MEMSWAP_LIMIT` | Docker memory+swap limit for the worker (default `6g`). |
+
+## Docker workflow
+
+```bash
+make docker-up
+make docker-migrate
+make docker-ps
+make docker-logs
+make docker-down
+```
+
+Start optional DWG profile:
+
+```bash
+make docker-up-dwg
+```
+
+This profile now builds GNU LibreDWG from source and exports `/opt/libredwg`
+through a named volume. The runtime services mount that volume read-only and
+default `DWG_CONVERTER_COMMAND` to `dwgwrite {input} {output}`.
+
+## ML model provisioning
+
+`backend/models/semantic_segmenter.onnx` ships a small reference model so the
+`ml` segmenter works out of the box. To (re)provision it, or to swap in trained
+weights, use:
+
+```bash
+make download-model                       # provision the reference model
+make download-model MODEL_URL=<url>       # download trained weights instead
+make validate-model                       # validate model contract + configured input size
+```
+
+Every provisioned artifact is validated. ONNX artifacts are checked for
+existence, <100 MB size, CPU-only ONNX Runtime loading, and 5-class decodable
+output; Torch Yytsi bundles validate the paired `best.safetensors` +
+`config.yaml` assets, confirm the configured input size matches the bundle, and
+exercise CPU inference. Invalid downloads are removed.
+
+Docker/runtime defaults now point at the Yytsi Hugging Face bundle:
+
+- `SEGMENTER_MODEL_PATH=./models/best.safetensors`
+- `SEGMENTER_MODEL_CONFIG_PATH=./models/config.yaml`
+- `SEGMENTER_MODEL_URL=https://huggingface.co/Yytsi/floorplan-to-3d-walls/.../best.safetensors`
+- `SEGMENTER_MODEL_CONFIG_URL=https://huggingface.co/Yytsi/floorplan-to-3d-walls/.../config.yaml`
+- `SEGMENTER_MODEL_INPUT_SIZE=512`
+
+Celery workers preload the configured ML backend once per process at startup
+(`worker_process_init`), so ONNX/Torch misconfiguration surfaces in worker logs
+immediately.
+
+To provision the Yytsi bundle manually from the backend package root:
+
+```bash
+python -m app.ml.download_model \
+  --models-dir ./models \
+  --filename best.safetensors \
+  --config-filename config.yaml \
+  --url https://huggingface.co/Yytsi/floorplan-to-3d-walls/resolve/main/best.safetensors \
+  --config-url https://huggingface.co/Yytsi/floorplan-to-3d-walls/resolve/main/config.yaml
+```
+
+## Hybrid local workflow
+
+Install dependencies first:
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+cd ../frontend
+npm install
+```
+
+Start services:
+
+```bash
+make local-up
+```
+
+The hybrid workflow runs frontend/backend on the host and PostgreSQL, Redis, and worker in Docker. It bind-mounts `backend/storage` and `backend/models` so host API and Docker worker share files.
+
+Useful commands:
+
+```bash
+make local-status
+make logs-backend
+make logs-frontend
+make logs-worker
+make local-down
+```
+
+## Database migrations
+
+Docker:
+
+```bash
+make docker-migrate
+```
+
+Hybrid host backend:
+
+```bash
+make local-migrate
+```
+
+Manual:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+## Tests and checks
+
+The `make` targets below run the same checks for each project. Every target also
+has a per-project variant (`make lint-backend`, `make lint-frontend`, and so on),
+and `make check` runs lint + typecheck + test while `make ci` adds install and build.
+
+```bash
+make install     # backend venv + deps, frontend npm dependencies
+make lint        # backend ruff, frontend eslint + prettier
+make typecheck   # backend mypy, frontend tsc --noEmit
+make test        # backend pytest, frontend vitest (skipped when not configured)
+make build       # backend byte-compile, frontend next build
+```
+
+The backend and frontend variants of a single phase are independent, so they can
+run concurrently with `-j2` (`make -j2 lint`, `make -j2 typecheck`,
+`make -j2 test`, `make -j2 build`, `make -j2 check`). Keep the phases themselves
+sequential, because `install` rewrites `backend/.venv` and `frontend/node_modules`:
+
+```bash
+make install && make -j2 check && make -j2 build
+```
+
+Do not run `make ci` with `-j`, since that could overlap `install` with `check`
+and `build`.
+
+GNU Make 3.81 (the macOS default) has no `--output-sync`, so parallel recipes may
+interleave lines from different projects in the terminal. Both commands still run
+and the exit status remains accurate.
+
+Equivalent manual commands:
+
+Backend:
+
+```bash
+cd backend
+ruff check .
+ruff format --check .
+mypy app/
+pytest
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm run lint
+npm run format:check
+npx tsc --noEmit
+npm run build
+```
+
+Pre-commit:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+## Cleanup
+
+Celery Beat runs two periodic cleanup tasks:
+
+1. **Expired-job cleanup** (daily) — archives jobs and removes local files older than `STORAGE_TTL_DAYS`.
+2. **Stale-job recovery** (every 5 minutes) — marks jobs stuck in `processing` for longer than `JOB_STALE_TIMEOUT_SECONDS` as `failed`. This handles the case where a worker is killed (e.g. OOM SIGKILL) before it can write a failure status.
+
+For local Make runtime files:
+
+```bash
+make clean-local-runtime
+```
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Frontend cannot reach API | Confirm `NEXT_PUBLIC_API_URL` and backend port 8000. |
+| Jobs stay pending | Confirm the worker is running (`make local-status` or `docker-compose ps`) and check `make logs-worker` for `Received unregistered task` errors. Task modules must be listed in the Celery `include` setting in `backend/app/tasks/celery_app.py`. |
+| No progress updates in UI | Conversion progress is emitted by the worker, not the API. Check `make logs-worker` (or `docker-compose logs worker`). The job page also polls the API every 3 seconds as a fallback, so confirm the backend is reachable. |
+| Downloads 404/409 | Confirm job is completed and output artifact exists. |
+| Page previews missing | Confirm parser produced `pages/page_0001.png` and `page_count`. |
+| DWG output missing | Confirm `output_format` and `DWG_CONVERTER_COMMAND`. |
+| Hybrid path issues | Confirm shared `LOCAL_STORAGE_DIR` and `LOCAL_MODELS_DIR`. |
+| Worker killed by SIGKILL (OOM) | The ONNX segmentation model + image pipeline can exceed the container memory limit. Check `docker-compose logs worker` for `signal 9 (SIGKILL)` / `WorkerLostError`. Increase `WORKER_MEM_LIMIT` / `WORKER_MEMSWAP_LIMIT` in `.env`, or reduce PDF DPI. The stale-job sweeper will eventually mark the orphaned job as `failed`. |
+| Jobs stuck in `processing` | A worker may have been killed before writing a failure status. The stale-job sweeper (every 5 min) will transition these to `failed` after `JOB_STALE_TIMEOUT_SECONDS`. Verify the worker is running and check logs for OOM or errors. |
+
+## Logging
+
+| Log target | Contents |
+| --- | --- |
+| `make logs-backend` / `docker-compose logs backend` | FastAPI HTTP requests and API errors. |
+| `make logs-worker` / `docker-compose logs worker` | Celery task lifecycle and conversion progress lines from `app.tasks.placeholder` (starting, step count, success/failure). |
+| `make logs-frontend` | Next.js dev server output. |
+
+Conversion status is logged by the worker, not the API. Watching only backend logs will not show conversion progress.

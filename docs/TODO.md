@@ -1,0 +1,1264 @@
+# TODO — AI File Converter Implementation Tracker
+
+[![CI](https://github.com/Josh-Uvi/DrawLift/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Josh-Uvi/DrawLift/actions/workflows/ci.yml)
+
+> Living document that decomposes the [README.md](./README.md) architecture into actionable work.
+> Structure follows GitHub Issues–style tracking: **Stages → Epics (Milestones/Labels) → User Stories (Issues) → Tasks (sub-checklists)**.
+> Each item includes priority, effort estimate, acceptance criteria, and dependencies.
+> Issue management is driven by the **GitHub CLI (`gh`)** and/or the **GitHub MCP server** — no Linear dependency.
+
+## Conventions
+
+### Priority Levels
+
+| Code   | Meaning            | Use when                  |
+| ------ | ------------------ | ------------------------- |
+| **P0** | Critical / Blocker | Cannot ship without it    |
+| **P1** | High               | Core MVP functionality    |
+| **P2** | Medium             | Required for polished MVP |
+| **P3** | Low                | Nice-to-have / future     |
+
+### Effort Estimation (T-Shirt Sizes)
+
+- **XS** — < 1 hour
+- **S** — 1–4 hours
+- **M** — 0.5–1 day
+- **L** — 1–3 days
+- **XL** — 3+ days (should be split)
+
+### Status
+
+`⬜ Backlog` · `🟦 Todo` · `🚧 In Progress` · `👀 In Review` · `✅ Done` · `❌ Blocked` · `⛔ Canceled`
+
+### Labels
+
+`area:frontend` · `area:backend` · `area:devops` · `area:ml` · `area:docs`
+`type:bug` · `type:chore` · `type:spike` · `type:feature`
+`epic:p1-scaffold` · `epic:p2-pdf` · `epic:p3-vectorize` · `epic:p4-3d` · `epic:p5-polish` · `epic:p6-ml-dwg` · `epic:p7-production` · `epic:p8-saas-billing`
+
+---
+
+## Stage Overview
+
+| #   | Stage                          | Goal                             | Status         | Stories | Tasks |
+| --- | ------------------------------ | -------------------------------- | -------------- | ------- | ----- |
+| 0   | **Bootstrap**                  | Repo, tooling, CI scaffold       | 🚧 In Progress | 4       | 12    |
+| 1   | **Phase 1 — MVP Skeleton**     | Upload + queue + job tracking    | 👀 In Review   | 7       | 26    |
+| 2   | **Phase 2 — PDF Parsing**      | Extract & preview page images    | 🚧 In Progress | 4       | 13    |
+| 3   | **Phase 3 — 2D Vectorization** | PDF → DXF (core value)           | 👀 In Review   | 5       | 16    |
+| 4   | **Phase 4 — 3D Extrusion**     | Walls → 3D model                 | 👀 In Review   | 4       | 13    |
+| 5   | **Phase 5 — Polish & DWG**     | Production-ready with DWG export | 👀 In Review   | 4       | 14    |
+| 6   | **Phase 6 — ML Model & DWG**   | ONNX segmentation + libredwg DWG | ✅ Done        | 4       | 13    |
+| 7   | **Phase 7 — Production Core**  | Auth, tenancy, hardening, storage, observability, deployment | 🟦 Todo | 12 | 50 |
+| 8   | **Phase 8 — SaaS & Billing**   | Plans, Stripe, metering, experience, launch docs | 🟦 Todo | 12 | 45 |
+
+**Total: 56 user stories · 202 actionable tasks**
+
+---
+
+## Progress Log
+
+| Date       | Milestone                   | PR                                                           | Stories completed | Notes                                                                                                                                                                                                                                                                                                                                                               |
+| ---------- | --------------------------- | ------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-07-22 | Stage 0 — US-001            | [#30](https://github.com/Josh-Uvi/DrawLift/pull/30) (merged) | US-001            | Monorepo layout, `.gitignore`, `LICENSE`, `README.md`                                                                                                                                                                                                                                                                                                               |
+| 2025-07-23 | Stage 0 + Stage 1 — Phase 1 | [#31](https://github.com/Josh-Uvi/DrawLift/pull/31) (open)   | US-002 → US-011   | Full Phase 1 implementation: FastAPI backend, Next.js 14 frontend, Docker Compose, CI, Celery, SSE streaming, and pre-commit quality gates.                                                                                                                                                                                                                         |
+| 2026-07-23 | Stage 2 — US-012            | Not opened                                                   | US-012            | Pipeline framework, context dataclass, ordered orchestrator, and Redis Pub/Sub progress publisher prepared on `feat/us-012-pipeline-infrastructure`.                                                                                                                                                                                                                |
+| 2026-07-23 | Stage 2 — US-013            | Not opened                                                   | US-013            | PyMuPDF parser step extracts PDF pages to configurable-DPI PNG images and reports the 20% pipeline milestone on `feat/us-013-pdf-page-extraction`.                                                                                                                                                                                                                  |
+| 2026-07-23 | Stage 2 — US-014            | Not opened                                                   | US-014            | OpenCV preprocessing converts pages to grayscale binary arrays, applies blur and adaptive thresholding, corrects skew, and reports the 35% milestone on `feature/US-014-opencv-preprocessing`.                                                                                                                                                                      |
+| 2026-07-27 | Stage 2 — US-015            | Not opened                                                   | US-015            | Page thumbnail preview: backend endpoint (`GET /jobs/{id}/pages/{n}`), PageViewer horizontal thumbnail strip, and click-to-enlarge modal on the job detail page on `feature/US-015-page-thumbnails`.                                                                                                                                                                |
+| 2026-07-27 | Stage 3 — Epic 3.1          | Not opened                                                   | US-016 → US-017   | Semantic segmentation step with CPU ONNX Runtime backend, cached model loading, persisted per-label masks, and Classic CV fallback selectable via job config on `feature/epic-3-1-semantic-segmentation`.                                                                                                                                                           |
+| 2026-07-27 | Stage 3 — Epic 3.2/3.3      | Not opened                                                   | US-018 → US-020   | Semantic masks now vectorize into CAD primitives, write readable layered DXF files with `ezdxf`, run through the real Celery pipeline, and expose completed-job DXF downloads on `feature/epic-3-vectorization-dxf`.                                                                                                                                                |
+| 2026-07-27 | Stage 4 — Epic 4.1/4.2      | Not opened                                                   | US-021 → US-024   | 3D extrusion lifts walls into rectangular prisms with floor/ceiling slabs, writes 3D DXF (`3DFACE`/`POLYLINE 3D`) plus a self-contained GLB via `trimesh`, adds a `three`/`@react-three/fiber` browser preview with orbit controls and wireframe/solid toggle, and serves `?format=glb` downloads on `feature/stage-4-3d-extrusion`.                                |
+| 2026-07-27 | Stage 5 — Epic 5.1/5.4      | Not opened                                                   | US-025 → US-028   | Production polish adds operator-configurable DWG conversion through libredwg/ODA command integration, DXF/DWG/both output selection, history/job management UI, retryable failed jobs with stored stack traces, global API error handling, daily Celery Beat cleanup, archived jobs, and an optional DWG converter compose profile on `feature/stage-5-polish-dwg`. |
+
+---
+
+# Stage 0 — Bootstrap & Tooling
+
+> **Goal:** Establish the repo skeleton, monorepo structure, dev tooling, and CI so all subsequent work can plug in cleanly.
+
+## Epic 0.1 — Repository Structure
+
+### US-001 · As a developer, I want a monorepo layout with `frontend/` and `backend/` folders
+
+- **Priority:** P0 · **Effort:** S · **Status:** ✅ Done · **Labels:** `area:devops`, `type:chore`
+- **PR:** [#30](https://github.com/Josh-Uvi/DrawLift/pull/30) (merged to `main` at `5ae452a`)
+- **Acceptance Criteria:**
+  - [x] `frontend/` and `backend/` directories created
+  - [x] Root `.gitignore` covers Node, Python, IDE, OS files
+  - [x] Root `README.md` links to `TODO.md` and architecture doc
+  - [x] `LICENSE` file present
+- **Tasks:**
+  - [x] T-001 — Create `frontend/` and `backend/` directories
+  - [x] T-002 — Write root `.gitignore`
+  - [x] T-003 — Add `LICENSE` (MIT recommended for POC)
+  - [x] T-004 — Update README to reference TODO.md
+
+## Epic 0.2 — Docker Compose Foundations
+
+### US-002 · As a developer, I want `docker compose up` to start all services
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:devops`, `type:feature`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] `docker-compose.yml` defines: `frontend`, `backend`, `worker`, `postgres`, `redis`
+  - [x] All services start without errors
+  - [x] Health check endpoint on backend responds 200
+  - [x] Frontend reachable at `http://localhost:3000`
+- **Tasks:**
+  - [x] T-005 — Write `docker-compose.yml` with 5 services
+  - [x] T-006 — Write `.env.example` with all required variables
+  - [x] T-007 — Write `backend/Dockerfile` (Python 3.11-slim)
+  - [x] T-008 — Write `frontend/Dockerfile` (Node 20-alpine, multi-stage)
+  - [x] T-009 — Wire service dependencies (backend → postgres, redis; worker → backend image)
+
+## Epic 0.3 — Code Quality Tooling
+
+### US-003 · As a developer, I want linting and formatting pre-configured
+
+- **Priority:** P1 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:devops`, `type:chore`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] Backend: `ruff` (lint + format) and `mypy` configured
+  - [x] Frontend: `eslint` + `prettier` configured
+  - [x] `pre-commit` hook runs both linters
+- **Tasks:**
+  - [x] T-010 — Configure `ruff.toml` and `pyproject.toml` for backend
+  - [x] T-011 — Configure `eslint.config.js` and `.prettierrc` for frontend
+  - [x] T-011a — Configure root `.pre-commit-config.yaml` to run backend and frontend checks
+
+### US-004 · As a developer, I want a basic CI pipeline on GitHub Actions
+
+- **Priority:** P2 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:devops`, `type:feature`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] CI runs on PR + push to `main`
+  - [x] Lints backend and frontend
+  - [x] Builds Docker images to validate Dockerfile syntax
+- **Tasks:**
+  - [x] T-012 — Write `.github/workflows/ci.yml`
+
+---
+
+# Stage 1 — Phase 1: MVP Skeleton (Upload & Job Tracking)
+
+> **Goal:** User can upload a PDF, see it queued, and observe status updates. No real conversion yet — just a placeholder pipeline that "succeeds".
+
+## Epic 1.1 — Backend Foundation
+
+### US-005 · As a backend dev, I want a FastAPI skeleton with health checks and config
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] `GET /api/v1/health` returns `{"status": "ok"}`
+  - [x] Pydantic settings load from `.env`
+  - [x] CORS configured to allow frontend origin
+  - [x] OpenAPI docs at `/docs`
+- **Tasks:**
+  - [x] T-013 — Create `backend/app/main.py` with FastAPI app
+  - [x] T-014 — Create `backend/app/core/config.py` with pydantic-settings
+  - [x] T-015 — Add CORS middleware
+  - [x] T-016 — Create `backend/app/api/v1/health.py`
+
+### US-006 · As a backend dev, I want PostgreSQL connected via SQLAlchemy (async)
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] `Job` model matches the schema in README §6
+  - [x] `alembic upgrade head` creates `jobs` table
+  - [x] Async session dependency in FastAPI
+- **Tasks:**
+  - [x] T-017 — Create `backend/app/models/job.py` SQLAlchemy model
+  - [x] T-018 — Create `backend/app/core/database.py` async engine + session
+  - [x] T-019 — Initialise Alembic, write first migration for `jobs` table
+  - [x] T-020 — Create `JobRepository` with CRUD methods
+
+### US-007 · As a backend dev, I want Celery wired to Redis
+
+- **Priority:** P0 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] `celery -A app.tasks.celery_app worker` starts without errors
+  - [x] A dummy task can be enqueued and executed
+  - [x] Result backend persists in Redis
+- **Tasks:**
+  - [x] T-021 — Create `backend/app/tasks/celery_app.py` with Celery config
+  - [x] T-022 — Create `backend/app/tasks/placeholder.py` dummy task
+
+## Epic 1.2 — File Upload API
+
+### US-008 · As a user, I want to upload a PDF and receive a `job_id`
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] `POST /api/v1/jobs` accepts `multipart/form-data` with `file` + `config`
+  - [x] Only `.pdf` files accepted (validated by MIME + extension)
+  - [x] File saved to local `storage/` directory (or S3 in prod)
+  - [x] Job row created in DB with `status=pending`
+  - [x] Celery task enqueued
+  - [x] Response: `201 { "job_id": "uuid" }`
+- **Tasks:**
+  - [x] T-023 — Create `backend/app/schemas/job.py` Pydantic models
+  - [x] T-024 — Create `backend/app/storage/local.py` (with `StorageBackend` interface)
+  - [x] T-025 — Create `backend/app/api/v1/jobs.py` with `POST /jobs` handler
+  - [x] T-026 — Add `GET /jobs/{id}` and `GET /jobs` endpoints
+  - [x] T-027 — Wire placeholder Celery task to update job status
+
+## Epic 1.3 — Frontend Foundation
+
+### US-009 · As a user, I want a clean landing page with a file drop zone
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] Next.js 14 App Router project initialised in `frontend/`
+  - [x] Tailwind configured
+  - [x] Landing page renders `<DropZone />` component
+  - [x] Drag-and-drop and click-to-browse both work
+  - [x] Only `.pdf` accepted with friendly error message
+- **Tasks:**
+  - [x] T-028 — Initialise Next.js 14 with TypeScript + Tailwind
+  - [x] T-029 — Install `react-dropzone` and `sonner`
+  - [x] T-030 — Create `components/upload/DropZone.tsx`
+  - [x] T-031 — Create `components/shared/Button.tsx` and `Card.tsx`
+  - [x] T-032 — Create `app/page.tsx` landing page
+
+### US-010 · As a user, I want to see conversion options before submitting
+
+- **Priority:** P1 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] 2D/3D mode toggle
+  - [x] DPI slider (150/300/600)
+  - [x] Floor height input (only when 3D)
+  - [x] Submit button disabled until file chosen
+- **Tasks:**
+  - [x] T-033 — Create `components/upload/ConversionOptions.tsx`
+  - [x] T-034 — Wire options to dropzone state via React Hook Form or local state
+
+### US-011 · As a user, I want to see live progress after submitting
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p1-scaffold`
+- **PR:** [#31](https://github.com/Josh-Uvi/DrawLift/pull/31)
+- **Acceptance Criteria:**
+  - [x] On submit, redirected to `/jobs/{id}`
+  - [x] Progress bar updates from SSE stream
+  - [x] Status badges for `pending` / `processing` / `completed` / `failed`
+- **Tasks:**
+  - [x] T-035 — Create `app/jobs/[id]/page.tsx`
+  - [x] T-036 — Create `lib/sse.ts` EventSource wrapper
+  - [x] T-037 — Create `components/job/ProgressTracker.tsx`
+  - [x] T-038 — Implement `GET /api/v1/jobs/{id}/stream` SSE endpoint on backend
+
+---
+
+# Stage 2 — Phase 2: PDF Parsing & Preprocessing
+
+> **Goal:** Extract page images from the uploaded PDF, apply basic image cleanup, and show previews in the UI.
+
+## Epic 2.1 — Pipeline Infrastructure
+
+### US-012 · As a backend dev, I want a pluggable pipeline framework
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p2-pdf`
+- **Acceptance Criteria:**
+  - [x] `PipelineStep` ABC defined
+  - [x] `PipelineContext` dataclass defined
+  - [x] `Pipeline.run()` executes steps in order
+  - [x] Each step can publish progress to Redis
+- **Tasks:**
+  - [x] T-039 — Create `backend/app/pipeline/steps/base.py` with `PipelineStep` ABC
+  - [x] T-040 — Create `backend/app/pipeline/context.py`
+  - [x] T-041 — Create `backend/app/pipeline/__init__.py` orchestrator
+  - [x] T-042 — Add progress publishing helper (Redis Pub/Sub)
+
+### US-013 · As a backend dev, I want PyMuPDF-based PDF page extraction
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p2-pdf`
+- **Acceptance Criteria:**
+  - [x] Step 1: extracts each page as a PNG at configurable DPI
+  - [x] Returns list of page image paths in `PipelineContext.page_images`
+  - [x] Reports `progress = 20%`
+- **Tasks:**
+  - [x] T-043 — Add `pymupdf` to requirements
+  - [x] T-044 — Implement `PdfParserStep` in `backend/app/pipeline/steps/pdf_parser.py`
+
+### US-014 · As a backend dev, I want an OpenCV preprocessing step
+
+- **Priority:** P1 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p2-pdf`
+- **Acceptance Criteria:**
+  - [x] Converts to grayscale
+  - [x] Applies Gaussian blur + adaptive threshold
+  - [x] Deskew correction
+  - [x] Reports `progress = 35%`
+- **Tasks:**
+  - [x] T-045 — Add `opencv-python-headless` and `numpy`
+  - [x] T-046 — Implement `OpenCVPreprocessor` in `backend/app/pipeline/steps/preprocessor.py`
+  - [x] T-047 — Unit test on a sample architectural drawing
+
+## Epic 2.2 — Frontend Preview
+
+### US-015 · As a user, I want to see extracted page thumbnails on the job page
+
+- **Priority:** P1 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p2-pdf`
+- **Acceptance Criteria:**
+  - [x] `/jobs/{id}/pages/{n}` endpoint serves extracted page images
+  - [x] Job detail page shows a horizontal strip of page thumbnails
+  - [x] Click thumbnail to enlarge in modal
+- **Tasks:**
+  - [x] T-048 — Add `GET /api/v1/jobs/{id}/pages/{n}` endpoint
+  - [x] T-049 — Create `components/job/PageViewer.tsx`
+  - [x] T-050 — Integrate `PageViewer` into `app/jobs/[id]/page.tsx`
+  - [x] T-051 — Add image modal component
+
+---
+
+# Stage 3 — Phase 3: 2D Vectorization (Core Value)
+
+> **Goal:** Convert the cleaned raster page images into parametric CAD primitives and export to DXF.
+
+## Epic 3.1 — Semantic Segmentation
+
+### US-016 · As a backend dev, I want to integrate an ML segmentation model
+
+- **Priority:** P0 · **Effort:** L · **Status:** 👀 In Review · **Labels:** `area:ml`, `area:backend`, `epic:p3-vectorize`
+- **Acceptance Criteria:**
+  - [x] Model loads once at worker startup (not per request)
+  - [x] Inference runs on CPU via ONNX Runtime
+  - [x] Returns per-pixel masks for: walls, doors, windows, rooms, text
+  - [x] Reports `progress = 60%`
+- **Tasks:**
+  - [x] T-052 — Spike: Evaluate pre-trained floor plan models (CubiCasa5K-based)
+  - [x] T-053 — Add `onnxruntime` to requirements
+  - [x] T-054 — Implement `SegmenterStep` in `backend/app/pipeline/steps/segmenter.py`
+  - [x] T-055 — Download/cache ONNX model weights in `models/` volume
+  - [x] T-056 — Unit test inference on sample input
+
+### US-017 · As a backend dev, I want a non-ML fallback for simple line drawings
+
+- **Priority:** P2 · **Effort:** L · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p3-vectorize`
+- **Acceptance Criteria:**
+  - [x] `ClassicCVSegmenter` using threshold + Hough line detection
+  - [x] User-selectable via job config (`segmenter: "ml" | "classic"`)
+  - [x] Significantly faster than ML path
+- **Tasks:**
+  - [x] T-057 — Implement `ClassicCVSegmenter`
+  - [x] T-058 — Add config flag in `PipelineContext`
+
+## Epic 3.2 — Vectorization
+
+### US-018 · As a backend dev, I want to convert masks into CAD primitives
+
+- **Priority:** P0 · **Effort:** L · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p3-vectorize`
+- **Acceptance Criteria:**
+  - [x] Wall segments become `(start, end, thickness)` primitives
+  - [x] Doors and windows become parametric blocks
+  - [x] Polygon simplification reduces noise
+  - [x] Reports `progress = 80%`
+- **Tasks:**
+  - [x] T-059 — Define `Primitive` dataclasses in `backend/app/pipeline/primitives.py`
+  - [x] T-060 — Implement `VectorizerStep` in `backend/app/pipeline/steps/vectorizer.py`
+  - [x] T-061 — Implement wall thinning + Douglas-Peucker simplification
+  - [x] T-062 — Unit test with synthetic mask input
+
+## Epic 3.3 — DXF Writer
+
+### US-019 · As a backend dev, I want to write primitives to DXF using `ezdxf`
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p3-vectorize`
+- **Acceptance Criteria:**
+  - [x] DXF file is generated and stored in output path
+  - [x] Layers: `WALLS`, `DOORS`, `WINDOWS`, `ROOMS`, `TEXT`
+  - [x] Output DXF opens in AutoCAD / LibreCAD without errors
+  - [x] Reports `progress = 95%`
+- **Tasks:**
+  - [x] T-063 — Add `ezdxf` to requirements
+  - [x] T-064 — Implement `DxfWriterStep` in `backend/app/pipeline/steps/dxf_writer.py`
+  - [x] T-065 — Test DXF output with `ezdxf` round-trip
+
+### US-020 · As a user, I want to download the generated DXF file
+
+- **Priority:** P0 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p3-vectorize`
+- **Acceptance Criteria:**
+  - [x] "Download" button appears when job status is `completed`
+  - [x] `GET /api/v1/jobs/{id}/download` returns DXF with correct Content-Disposition
+- **Tasks:**
+  - [x] T-066 — Add `GET /api/v1/jobs/{id}/download` endpoint
+  - [x] T-067 — Create `components/job/DownloadButton.tsx`
+
+---
+
+# Stage 4 — Phase 4: 3D Extrusion
+
+> **Goal:** Given a 2D vectorized floor plan, extrude walls into 3D and add slabs.
+
+## Epic 4.1 — Wall Extrusion
+
+### US-021 · As a backend dev, I want to extrude wall segments into 3D volumes
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p4-3d`
+- **Acceptance Criteria:**
+  - [x] Each wall becomes a rectangular prism with floor-height as Z-dimension
+  - [x] Walls respect their original `(start, end, thickness)` geometry
+  - [x] Configurable floor height (default 3.0m)
+  - [x] Reports `progress = 85%`
+- **Tasks:**
+  - [x] T-068 — Implement `WallExtruderStep` in `backend/app/pipeline/steps/extruder.py`
+  - [x] T-069 — Update `Primitive` dataclass to support 3D (`Point3D`, `WallSolidPrimitive`, `SlabPrimitive`)
+  - [x] T-070 — Add 3D primitives to DXF writer (`3DFACE` + `POLYLINE 3D` on `WALLS_3D` / `SLABS` layers)
+
+### US-022 · As a backend dev, I want to add floor and ceiling slabs
+
+- **Priority:** P1 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p4-3d`
+- **Acceptance Criteria:**
+  - [x] Detect room polygons from segmentation
+  - [x] Add a slab at z=0 covering the union of rooms
+  - [x] Optional ceiling at z=floor_height
+- **Tasks:**
+  - [x] T-071 — Implement `SlabGenerator` helper in `primitives.py`
+  - [x] T-072 — Hook slab generation into `WallExtruderStep`
+  - [x] T-073 — Add slab thickness config (default 0.2m)
+
+## Epic 4.2 — 3D Preview & Export
+
+### US-023 · As a user, I want to see a 3D preview of the generated model in the browser
+
+- **Priority:** P2 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p4-3d`
+- **Acceptance Criteria:**
+  - [x] Job detail page renders a 3D scene when job mode is `3d`
+  - [x] Orbit controls (zoom, pan, rotate)
+  - [x] Toggle between wireframe and solid shading
+- **Tasks:**
+  - [x] T-074 — Add `three`, `@react-three/fiber`, and `@react-three/drei` to frontend deps
+  - [x] T-075 — Create `components/job/Model3DPreview.tsx`
+  - [x] T-076 — Load the exported GLB into Three.js geometry in the browser (via `useGLTF`)
+  - [x] T-077 — Add 3D view/slab options in `ConversionOptions` and a wireframe/solid toggle in the preview
+
+> **Note:** T-076 loads the backend-generated GLB with `@react-three/drei`'s `useGLTF`
+> instead of parsing DXF in the browser — this reuses the same self-contained model
+> produced for US-024 and avoids shipping a DXF parser to the client.
+
+### US-024 · As a user, I want to download the 3D model in a standard format
+
+- **Priority:** P2 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p4-3d`
+- **Acceptance Criteria:**
+  - [x] In addition to DXF, export to GLB (binary glTF)
+  - [x] GLB is a single self-contained file
+  - [x] Opens in any 3D viewer (Blender, online viewers)
+- **Tasks:**
+  - [x] T-078 — Add `trimesh` (with `shapely` + `manifold3d`) to requirements
+  - [x] T-079 — Implement `GlbWriterStep` in `backend/app/pipeline/steps/glb_writer.py`
+  - [x] T-080 — Update download endpoint to return `output.glb` when `format=glb`
+
+---
+
+# Stage 5 — Phase 5: Polish, DWG Export & Production Readiness
+
+> **Goal:** Add DWG export, robust error handling, history UI, and prepare for production.
+
+## Epic 5.1 — DWG Export
+
+### US-025 · As a user, I want to download a true DWG file (not just DXF)
+
+- **Priority:** P1 · **Effort:** L · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p5-polish`
+- **Acceptance Criteria:**
+  - [x] DWG file generated alongside DXF
+  - [x] Uses `libredwg` or ODA `FileConverter` (Docker sidecar)
+  - [x] User-selectable output format (DXF / DWG / both)
+  - [x] Output opens in AutoCAD without conversion errors
+- **Tasks:**
+  - [x] T-081 — Spike: Choose between libredwg vs ODA FileConverter
+  - [x] T-082 — Add DWG conversion service (Docker service in `docker-compose.yml`)
+  - [x] T-083 — Implement `DwgConverter` post-processor
+  - [x] T-084 — Update job config to accept `output_format: "dxf" | "dwg" | "both"`
+
+> **Note:** DWG is proprietary, so the implementation does not bundle converter
+> binaries. Operators can set `DWG_CONVERTER_COMMAND` for libredwg's `dwgwrite`,
+> ODA FileConverter, or a shared-volume Docker sidecar. Tests verify command
+> invocation, artifact creation, failure surfacing, and safe download serving.
+
+## Epic 5.2 — History & Job Management
+
+### US-026 · As a user, I want to see my past conversions
+
+- **Priority:** P1 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:frontend`, `epic:p5-polish`
+- **Acceptance Criteria:**
+  - [x] `/history` page lists all past jobs
+  - [x] Sortable by date, filterable by status
+  - [x] Click to re-open job detail page
+  - [x] Delete button with confirmation
+- **Tasks:**
+  - [x] T-085 — Create `app/history/page.tsx`
+  - [x] T-086 — Implement `GET /api/v1/jobs?status=...&page=...` pagination
+  - [x] T-087 — Create `components/history/JobTable.tsx`
+  - [x] T-088 — Implement `DELETE /api/v1/jobs/{id}` frontend action
+
+## Epic 5.3 — Error Handling & Resilience
+
+### US-027 · As a backend dev, I want robust error handling and retries
+
+- **Priority:** P1 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p5-polish`
+- **Acceptance Criteria:**
+  - [x] Failed jobs store `error_msg` and a stack trace
+  - [x] Celery task retries with exponential backoff (3 attempts)
+  - [x] User sees actionable error message in UI
+  - [x] "Retry" button re-enqueues the job with same config
+- **Tasks:**
+  - [x] T-089 — Add retry decorator to Celery tasks
+  - [x] T-090 — Implement global exception handler in FastAPI
+  - [x] T-091 — Add error toast in `DownloadButton` and `ProgressTracker`
+
+## Epic 5.4 — File Lifecycle & Storage
+
+### US-028 · As an operator, I want uploaded and output files auto-cleaned after 7 days
+
+- **Priority:** P2 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:backend`, `epic:p5-polish`
+- **Acceptance Criteria:**
+  - [x] Celery beat task runs daily
+  - [x] Deletes files older than 7 days
+  - [x] Marks corresponding jobs as `archived`
+  - [x] Logs the cleanup activity
+- **Tasks:**
+  - [x] T-092 — Create `backend/app/tasks/cleanup.py` beat schedule
+  - [x] T-093 — Add `archived` status enum value
+  - [x] T-094 — Wire beat into `docker-compose.yml`
+
+---
+
+# Stage 6 — ML Model & DWG Converter
+
+> **Goal:** Acquire a production-ready floor-plan segmentation model, wire it into the ML segmenter path, and build a `libredwg` Docker sidecar for true DXF→DWG conversion. These are the two critical blockers preventing the pipeline from producing production-quality output.
+
+## Epic 6.1 — ML Model Acquisition
+
+### US-029 · As a backend dev, I want a pre-trained floor-plan ONNX model in `backend/models/`
+
+- **Priority:** P0 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:ml`, `type:feature`
+- **Acceptance Criteria:**
+  - [x] Model file exists at `backend/models/semantic_segmenter.onnx`
+  - [x] Model produces segmentation output compatible with 5-class mask format (walls, doors, windows, rooms, text)
+  - [x] Model loads with ONNX Runtime on CPU without GPU dependencies
+  - [x] Model file size is under 100 MB to fit within worker memory budget
+- **Tasks:**
+  - [x] T-095 — Evaluate and select ONNX model (CubiCasa5K SegFormer ~85MB, FloorPlan-Segmentation-UNet ~30MB, or R2CNN ~50MB)
+  - [x] T-096 — Download/convert model to ONNX format and place in `backend/models/`
+  - [x] T-097 — Add `make download-model` target for reproducible model setup
+- **Implementation notes:**
+  - The candidate pre-trained models above ship as PyTorch checkpoints whose I/O contracts (RGB input, differing class sets) do not match `OnnxSemanticSegmenter`, and converting them requires a heavyweight torch toolchain. Instead, `backend/models/semantic_segmenter.onnx` bundles a deterministic ~2 KB reference ONNX model (edge-energy segmentation expressed as ONNX ops) that satisfies the exact segmenter contract, and `make download-model MODEL_URL=<url>` / `SEGMENTER_MODEL_URL` provide the validated acquisition path for swapping in trained weights. Contract enforcement lives in `app.ml.segmentation_model.validate_segmentation_model`.
+
+## Epic 6.2 — ML Segmentation Wiring
+
+### US-030 · As a backend dev, I want the ML segmenter wired with env config for the model path
+
+- **Priority:** P0 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:backend`, `type:feature`
+- **Acceptance Criteria:**
+  - [x] `SEGMENTER_MODEL_PATH` is set in `.env.example` pointing to `backend/models/semantic_segmenter.onnx`
+  - [x] `SEGMENTER_MODEL_URL` is set for auto-download fallback in Docker
+  - [x] Worker loads model on startup without errors
+  - [x] ML segmenter produces valid output for a sample floor plan PDF
+- **Tasks:**
+  - [x] T-098 — Set `SEGMENTER_MODEL_PATH` and `SEGMENTER_MODEL_URL` in `.env.example` and `docker-compose.yml`
+  - [x] T-099 — Verify ONNX inference input/output tensor shapes match `OnnxSemanticSegmenter` expectations
+  - [x] T-100 — Add integration test for ML segmenter with real model file
+- **Implementation notes:**
+  - Follow-up Torch wiring now defaults Docker/runtime environments to the `Yytsi/floorplan-to-3d-walls` bundle (`best.safetensors` + `config.yaml`) via `SEGMENTER_MODEL_PATH`, `SEGMENTER_MODEL_CONFIG_PATH`, `SEGMENTER_MODEL_URL`, and `SEGMENTER_MODEL_CONFIG_URL`. `AutoMlSegmenter` dispatches by file extension (`.onnx` → ONNX Runtime, `.safetensors` → Torch/Yytsi), and Celery workers preload the configured backend via `worker_process_init` so configuration errors surface on startup.
+
+### US-031 · As a user, I want ML segmentation producing all five mask classes
+
+- **Priority:** P1 · **Effort:** S · **Status:** 👀 In Review · **Labels:** `area:ml`, `type:feature`
+- **Acceptance Criteria:**
+  - [x] ML masks cover all 5 labels: walls, doors, windows, rooms, text
+  - [x] `SEGMENTER_MODEL_INPUT_SIZE` config matches model's expected input dimensions
+  - [x] Classic vs ML comparison documented on a sample architectural drawing
+  - [x] DXF output includes door/window/text entities when using ML segmenter
+- **Tasks:**
+  - [x] T-101 — Validate ML masks cover all 5 labels on test images
+  - [x] T-102 — Update `SEGMENTER_MODEL_INPUT_SIZE` if model requires different resolution (e.g. 256×256 for CubiCasa5K)
+  - [x] T-103 — Compare classic vs ML output quality on sample floor plan and document results
+- **Implementation notes:**
+  - The Yytsi Torch bundle predicts four structural classes (`floor`, `wall`, `door`, `window`). The backend preserves the existing five-class contract by deriving `rooms` from structural masks and heuristically provisioning `text` from residual foreground blobs. `SEGMENTER_MODEL_INPUT_SIZE=512` now matches the published Yytsi bundle defaults, while the legacy ONNX path remains available as a compatibility fallback. The full PDF→DXF pipeline with `segmenter: "ml"` continues to emit DOORS/WINDOWS/TEXT entities, which the classic backend cannot produce. See [Classic vs ML comparison](./pipeline.md#classic-vs-ml-segmentation-comparison).
+
+## Epic 6.3 — DWG Converter Sidecar
+
+### US-032 · As a devops engineer, I want a libredwg Docker sidecar for DXF→DWG conversion
+
+- **Priority:** P1 · **Effort:** M · **Status:** 👀 In Review · **Labels:** `area:devops`, `type:feature`
+- **Acceptance Criteria:**
+  - [x] `libredwg` Docker image builds successfully from source
+  - [x] `dwg-converter` Compose profile uses the libredwg image instead of alpine placeholder
+  - [x] `DWG_CONVERTER_COMMAND` is auto-configured to `dwgwrite {input} {output}` in compose
+  - [x] End-to-end test: DXF→DWG conversion via sidecar produces a valid DWG file
+- **Tasks:**
+  - [x] T-104 — Create `backend/Dockerfile.libredwg` building `dwgwrite` from GNU LibreDWG source
+  - [x] T-105 — Update `dwg-converter` Compose profile to use libredwg image with storage volume mount
+  - [x] T-106 — Set `DWG_CONVERTER_COMMAND='dwgwrite {input} {output}'` in docker-compose.yml
+  - [x] T-107 — Add end-to-end test: generate DXF via pipeline, convert to DWG via sidecar, validate output
+- **Implementation notes:**
+  - The GNU LibreDWG image is built from the official 0.13.3 source tarball and installed into a shared `/opt/libredwg` volume that the `backend`, `worker`, and `beat` services mount read-only. Compose auto-configures `DWG_CONVERTER_COMMAND='dwgwrite {input} {output}'`; the image provides a compatibility wrapper translating that two-positional-args contract to LibreDWG's native `dwgwrite -o OUTFILE INFILE` CLI. The runtime step now prefers `dxf2dwg` first, then `dwgwrite`, before falling back to ODA FileConverter.
+
+# Stage 7 — Phase 7: Production Core (Security, Tenancy, Infrastructure)
+
+> **Goal:** Make the platform safe and operable for real, paying users: authentication, per-user isolation, hardening, object storage, observability, cancellation, production deployment, and compliance.
+
+## Epic 7.1 — Identity and Multi-tenancy
+
+### US-033 · As a visitor, I want to create an account and sign in so my conversions are private
+
+- **Priority:** P0 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `area:frontend`, `type:feature`, `epic:p7-production` · **Issue:** [#60](https://github.com/Josh-Uvi/DrawLift/issues/60)
+- **Acceptance Criteria:**
+  - [ ] Email+password registration and login with Argon2 password hashing
+  - [ ] Login issues a short-lived access token and an httpOnly refresh cookie
+  - [ ] `GET /api/v1/me` returns the current user profile
+  - [ ] Every `/api/v1/jobs*` endpoint returns 401 without valid auth
+  - [ ] `/login` and `/register` pages with field validation, duplicate-email error, and loading/disabled states
+  - [ ] Header shows sign-in/sign-out state based on auth status
+- **Tasks:**
+  - [ ] T-108 — Add Alembic migration creating the users table
+  - [ ] T-109 — Implement auth service (hashing, token issue, verify) in `backend/app/auth/`
+  - [ ] T-110 — Add `get_current_user` FastAPI dependency and apply it to job routes
+  - [ ] T-111 — Add frontend auth context, `/login` and `/register` routes, and protected layout
+  - [ ] T-112 — Add pytest coverage for registration, login, `/me`, and token expiry
+
+### US-034 · As a user, I want my jobs visible only to me
+
+- **Priority:** P0 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p7-production` · **Issue:** [#61](https://github.com/Josh-Uvi/DrawLift/issues/61)
+- **Acceptance Criteria:**
+  - [ ] `jobs` table has an indexed `user_id` foreign key
+  - [ ] Job list, detail, pages, download, retry, and delete enforce ownership and return 404 for foreign jobs
+  - [ ] Admin role can view all jobs
+  - [ ] History page shows only the current user's jobs
+  - [ ] Pre-tenant rows are marked legacy and only visible to admins
+- **Tasks:**
+  - [ ] T-113 — Add Alembic migration for `jobs.user_id` FK and index
+  - [ ] T-114 — Apply ownership guard helper to all job endpoints
+  - [ ] T-115 — Add admin-role bypass for operator support
+  - [ ] T-116 — Add tests for cross-user access denial and admin access
+
+## Epic 7.2 — Security Hardening
+
+### US-035 · As a security owner, I want stack traces hidden from ordinary users
+
+- **Priority:** P1 · **Effort:** S · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p7-production` · **Issue:** [#62](https://github.com/Josh-Uvi/DrawLift/issues/62)
+- **Acceptance Criteria:**
+  - [ ] `error_trace` is omitted from API responses unless the caller is admin or `DEBUG` mode is enabled
+  - [ ] User-facing `error_msg` is mapped from a friendly error catalog covering upload, parser, pipeline, and converter failures
+  - [ ] `docs/api.md` documents the trace-hiding behavior
+- **Tasks:**
+  - [ ] T-117 — Serialize `error_trace` conditionally in JobStatus responses
+  - [ ] T-118 — Build friendly error-message catalog and map stored failures
+  - [ ] T-119 — Add tests covering trace hiding for users vs admins
+
+### US-036 · As a user, I want clear actionable feedback when my PDF cannot be accepted
+
+- **Priority:** P0 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p7-production` · **Issue:** [#63](https://github.com/Josh-Uvi/DrawLift/issues/63)
+- **Acceptance Criteria:**
+  - [ ] Uploads larger than `MAX_UPLOAD_SIZE_MB` (default 50 MB) are rejected before enqueue with an actionable 400/413
+  - [ ] PDFs with more pages than `MAX_PAGES` (default 20) are rejected before conversion starts with a clear error
+  - [ ] Password-protected PDFs are detected at upload and rejected with an actionable 400
+  - [ ] Magic-byte sniffing validates uploads in addition to extension and MIME checks
+  - [ ] Limits are documented in `docs/api.md` and surfaced in frontend help text
+- **Tasks:**
+  - [ ] T-120 — Add streaming upload size guard
+  - [ ] T-121 — Add PyMuPDF encryption and page-count pre-checks
+  - [ ] T-122 — Add `MAX_UPLOAD_SIZE_MB` and `MAX_PAGES` settings
+  - [ ] T-123 — Add tests incl. oversized and encrypted PDF fixtures
+
+### US-037 · As an operator, I want rate limits and per-user fairness on conversions
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p7-production` · **Issue:** [#64](https://github.com/Josh-Uvi/DrawLift/issues/64)
+- **Acceptance Criteria:**
+  - [ ] `POST /api/v1/jobs` is rate limited per user (default 10/hour) with a Redis-backed counter
+  - [ ] Rate-limited requests are rejected with 429 and a `Retry-After` header
+  - [ ] Per-user concurrency cap on active (queued+processing) jobs (default 2) rejects new jobs with a clear message
+  - [ ] Limits are configurable via env and documented in `docs/operations.md`
+  - [ ] History UI signals the capped state when a concurrency limit is hit
+- **Tasks:**
+  - [ ] T-124 — Implement Redis-backed rate limiter utility
+  - [ ] T-125 — Enforce active-job concurrency guard in job creation
+  - [ ] T-126 — Add rate-limit and concurrency tests
+
+### US-038 · As an operator, I want uploads scanned for malware before processing
+
+- **Priority:** P2 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:devops`, `type:feature`, `epic:p7-production` · **Issue:** [#65](https://github.com/Josh-Uvi/DrawLift/issues/65)
+- **Acceptance Criteria:**
+  - [ ] Optional `clamav` service in `docker-compose.yml` with a healthcheck
+  - [ ] Uploads are scanned after saving and before Celery enqueue
+  - [ ] Infected files are rejected with a stored reason and the file is removed
+  - [ ] `SCAN_FAIL_POLICY` env selects fail-open (dev) or fail-closed (prod) when the scanner is unavailable
+  - [ ] Scanner-disabled mode skips gracefully and `/health` reflects scanner status
+- **Tasks:**
+  - [ ] T-127 — Add clamav sidecar and healthcheck to `docker-compose.yml`
+  - [ ] T-128 — Wire scan step into the upload flow with fail-policy switch
+  - [ ] T-129 — Add tests using EICAR test fixtures
+
+## Epic 7.3 — Storage, Observability, and Control
+
+### US-039 · As an operator, I want job files stored in S3-compatible object storage
+
+- **Priority:** P1 · **Effort:** L · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p7-production` · **Issue:** [#66](https://github.com/Josh-Uvi/DrawLift/issues/66)
+- **Acceptance Criteria:**
+  - [ ] `StorageBackend` protocol defines save/get/delete and presigned_url
+  - [ ] `STORAGE_BACKEND=local|s3` selects LocalStorage (current behavior) or S3Storage
+  - [ ] Downloads serve expiring presigned URLs when the S3 backend is active
+  - [ ] TTL cleanup no-ops safely on S3 and lifecycle policy guidance is documented
+  - [ ] Hybrid host/Docker development workflow stays unchanged
+  - [ ] Bucket/IAM runbook added to `docs/operations.md`
+- **Tasks:**
+  - [ ] T-130 — Refactor `app/storage/local.py` behind a `StorageBackend` protocol
+  - [ ] T-131 — Implement S3 adapter with boto3
+  - [ ] T-132 — Serve presigned URLs from the download endpoint on S3
+  - [ ] T-133 — Wire `S3_BUCKET`, `S3_REGION`, and `S3_PRESIGN_TTL_SECONDS` settings
+  - [ ] T-134 — Add S3 adapter tests with moto
+
+### US-040 · As an operator, I want metrics, structured logs, and a readiness dashboard for the service
+
+- **Priority:** P1 · **Effort:** L · **Status:** 🟦 Todo · **Labels:** `area:devops`, `type:feature`, `epic:p7-production` · **Issue:** [#67](https://github.com/Josh-Uvi/DrawLift/issues/67)
+- **Acceptance Criteria:**
+  - [ ] Backend exposes Prometheus `/metrics`
+  - [ ] Metrics include uploads, queue depth, job duration, per-step duration, failure counts by class, and active SSE streams
+  - [ ] API and worker emit structured JSON logs with request-id correlation
+  - [ ] Grafana dashboard JSON and an observability Compose profile (Prometheus + Grafana) ship
+  - [ ] Alert rules are documented
+- **Tasks:**
+  - [ ] T-135 — Add Prometheus instrumentation to API and worker
+  - [ ] T-136 — Add structured logging middleware with request-id correlation
+  - [ ] T-137 — Add observability Compose profile
+  - [ ] T-138 — Add Grafana dashboard JSON and alert rules doc
+  - [ ] T-139 — Add metrics naming and label tests
+
+### US-041 · As a user, I want to cancel a queued or running conversion
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `area:frontend`, `type:feature`, `epic:p7-production` · **Issue:** [#68](https://github.com/Josh-Uvi/DrawLift/issues/68)
+- **Acceptance Criteria:**
+  - [ ] `POST /api/v1/jobs/{id}/cancel` revokes queued tasks and marks the job cancelled
+  - [ ] Running jobs cancel cooperatively via a flag checked between pipeline steps
+  - [ ] `cancelled` status appears in API responses, SSE events, history, and job page as a terminal state
+  - [ ] Cancel button is enabled only while the job is queued or processing
+  - [ ] Cancelled jobs are deletable but not retryable
+- **Tasks:**
+  - [ ] T-140 — Add cancel endpoint with Celery revoke
+  - [ ] T-141 — Add cooperative cancel flag check between pipeline steps
+  - [ ] T-142 — Extend status enum with `cancelled` and emit SSE event
+  - [ ] T-143 — Add cancel button and state handling in the frontend
+  - [ ] T-144 — Add endpoint and orchestrator cancel tests
+
+## Epic 7.4 — Deployment and Compliance
+
+### US-042 · As an operator, I want hardened production containers and a production compose profile
+
+- **Priority:** P0 · **Effort:** L · **Status:** 🟦 Todo · **Labels:** `area:devops`, `type:feature`, `epic:p7-production` · **Issue:** [#69](https://github.com/Josh-Uvi/DrawLift/issues/69)
+- **Acceptance Criteria:**
+  - [ ] Multi-stage images run as non-root with no source bind mounts and no `--reload`
+  - [ ] `docker-compose.prod.yml` defines resource limits, restart policies, healthchecks, and pinned base images
+  - [ ] Secrets are supplied via env or a secret manager with no default credentials
+  - [ ] HTTPS termination example (Caddy) provided; CORS restricted to real origins; `DEBUG=false` by default
+  - [ ] CI runs a Trivy image scan
+  - [ ] Hardening steps documented in `docs/operations.md`
+- **Tasks:**
+  - [ ] T-145 — Harden backend and frontend Dockerfiles (non-root, slim runtime)
+  - [ ] T-146 — Add `docker-compose.prod.yml` and `.env.production.example`
+  - [ ] T-147 — Add Caddy/TLS termination example and CORS/secrets guidance
+  - [ ] T-148 — Add Trivy image scan job to CI
+  - [ ] T-149 — Update operations doc with production hardening steps
+
+### US-043 · As a developer, I want CI/CD that publishes images and keeps dependencies safe
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:devops`, `type:chore`, `epic:p7-production` · **Issue:** [#70](https://github.com/Josh-Uvi/DrawLift/issues/70)
+- **Acceptance Criteria:**
+  - [ ] Release tags publish tagged images to GHCR
+  - [ ] Deployments run migrations as a pre-step with rollback guidance
+  - [ ] Dependabot enabled for pip, npm, Docker, and GitHub Actions
+  - [ ] CodeQL and secret-scan jobs run on PRs
+  - [ ] Coverage reports are uploaded as CI artifacts
+  - [ ] Release checklist documented
+- **Tasks:**
+  - [ ] T-150 — Add GHCR image publish workflow on release tags
+  - [ ] T-151 — Configure Dependabot and security workflows
+  - [ ] T-152 — Add migration deploy step and rollback doc
+  - [ ] T-153 — Add coverage reporting to CI
+
+### US-044 · As a compliance owner, I want audit trails, data-retention controls, and legal basics
+
+- **Priority:** P2 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p7-production` · **Issue:** [#71](https://github.com/Josh-Uvi/DrawLift/issues/71)
+- **Acceptance Criteria:**
+  - [ ] `audit_logs` records upload, download, delete, retry, cancel, and account events with actor, action, job, IP, and timestamp
+  - [ ] Users can export their job data and metadata as JSON
+  - [ ] Users can delete their account, cascading to jobs and stored files
+  - [ ] Retention honors `STORAGE_TTL_DAYS`
+  - [ ] Placeholder Privacy Policy and Terms pages linked from the footer
+- **Tasks:**
+  - [ ] T-154 — Add audit log model and recording hooks
+  - [ ] T-155 — Add export-my-data and delete-account endpoints
+  - [ ] T-156 — Add legal placeholder pages and footer links
+  - [ ] T-157 — Add audit, export, and deletion tests
+
+# Stage 8 — Phase 8: SaaS Product & Billing
+
+> **Goal:** Turn the hardened platform into a sellable, self-serve product: plans and entitlements, Stripe subscriptions, usage metering, account/onboarding experience, UX polish, conversion quality, and launch documentation.
+
+## Epic 8.1 — Monetization
+
+### US-045 · As a product owner, I want plans and entitlements controlling what users can do
+
+- **Priority:** P0 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#72](https://github.com/Josh-Uvi/DrawLift/issues/72)
+- **Acceptance Criteria:**
+  - [ ] Free and Pro plans defined as code-driven entitlement config
+  - [ ] Entitlements cover max upload MB, pages per month, concurrent jobs, allowed output formats, and segmenter availability
+  - [ ] `users.plan` field drives effective entitlements
+  - [ ] Job creation enforces entitlements and downloads gate output formats
+  - [ ] `GET /api/v1/entitlements` endpoint powers frontend feature flags
+  - [ ] Each entitlement rule is unit tested
+- **Tasks:**
+  - [ ] T-158 — Create entitlement config module and tests
+  - [ ] T-159 — Add `users.plan` migration and enforcement hooks
+  - [ ] T-160 — Add entitlements API endpoint
+  - [ ] T-161 — Add frontend entitlement hooks gating UI controls
+
+### US-046 · As a customer, I want to subscribe via Stripe and have my plan activate reliably
+
+- **Priority:** P0 · **Effort:** L · **Status:** 🟦 Todo · **Labels:** `area:backend`, `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#73](https://github.com/Josh-Uvi/DrawLift/issues/73)
+- **Acceptance Criteria:**
+  - [ ] Stripe customer is linked on signup
+  - [ ] Checkout Session purchases a plan
+  - [ ] Webhook endpoint verifies Stripe signatures
+  - [ ] `checkout.session.completed` and subscription `updated`/`deleted` events apply idempotently
+  - [ ] `subscriptions` table state drives entitlements
+  - [ ] Customer Portal link enables plan management and cancellation
+  - [ ] Test-mode runbook and fixture-based webhook tests exist
+- **Tasks:**
+  - [ ] T-162 — Integrate Stripe client and customer linking
+  - [ ] T-163 — Add checkout flow and `subscriptions` migration
+  - [ ] T-164 — Add webhook endpoint with signature verification and idempotency
+  - [ ] T-165 — Add customer portal link and plan state to the account UI
+  - [ ] T-166 — Add webhook fixture tests
+
+### US-047 · As a user, I want to see and understand my usage before I hit limits
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#74](https://github.com/Josh-Uvi/DrawLift/issues/74)
+- **Acceptance Criteria:**
+  - [ ] `usage_counters` tracks converted pages per user per monthly period
+  - [ ] Counter increments when jobs complete
+  - [ ] Job creation returns 429 with an upgrade hint when the monthly page budget is exhausted
+  - [ ] `GET /api/v1/usage` returns current period usage vs limit
+  - [ ] Upload form shows remaining pages hint and account page shows a usage bar
+- **Tasks:**
+  - [ ] T-167 — Add usage counter model and increment on completion
+  - [ ] T-168 — Add budget check at job creation and usage endpoint
+  - [ ] T-169 — Add frontend upload hint and account usage display
+
+## Epic 8.2 — Account, Onboarding, and Experience
+
+### US-048 · As a user, I want an account dashboard where I manage profile, plan, and history
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#75](https://github.com/Josh-Uvi/DrawLift/issues/75)
+- **Acceptance Criteria:**
+  - [ ] `/account` page with profile card including change password
+  - [ ] Plan card shows current plan, usage, and upgrade/portal actions
+  - [ ] History supports pagination and filename search
+  - [ ] Consistent empty, loading, and error states on account and history surfaces
+  - [ ] Unauthenticated visitors are redirected to login
+- **Tasks:**
+  - [ ] T-170 — Build account page shell and change-password flow
+  - [ ] T-171 — Wire plan and usage cards to entitlements/usage APIs
+  - [ ] T-172 — Add history pagination and search
+  - [ ] T-173 — Add account page checks and build verification
+
+### US-049 · As a visitor, I want a landing and onboarding experience that explains the product and pricing
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#76](https://github.com/Josh-Uvi/DrawLift/issues/76)
+- **Acceptance Criteria:**
+  - [ ] Landing page with hero, 3-step how-it-works, and sample output preview
+  - [ ] Pricing section driven from entitlement config
+  - [ ] Sign-up and sign-in CTAs route to auth pages
+  - [ ] Legal footer links present
+  - [ ] Upload workflow gated behind auth with a first-run onboarding hint
+  - [ ] Page metadata, landmarks, and focus order verified
+- **Tasks:**
+  - [ ] T-174 — Build landing sections and pricing from entitlements
+  - [ ] T-175 — Gate upload entry behind auth and add onboarding hint
+  - [ ] T-176 — Add footer and legal links
+  - [ ] T-177 — Verify accessibility and build
+
+### US-050 · As a user, I want confident, informative upload and progress experiences
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#77](https://github.com/Josh-Uvi/DrawLift/issues/77)
+- **Acceptance Criteria:**
+  - [ ] Upload shows a real progress bar via XHR
+  - [ ] Client-side validation uses entitlement limits for type and size before submit
+  - [ ] Progress tracker shows step name, percentage, and estimated-time hint
+  - [ ] Failure state shows friendly error and suggested next actions (retry, adjust settings)
+  - [ ] Cancel button integrated once US-041 lands
+  - [ ] Copy reviewed for clarity; toasts reserved for transient events
+- **Tasks:**
+  - [ ] T-178 — Implement XHR upload with progress and client validation
+  - [ ] T-179 — Improve progress tracker copy, ETA, and failure next-actions UI
+  - [ ] T-180 — Integrate cancel button
+  - [ ] T-181 — Copy and accessibility review with build checks
+
+### US-051 · As a user, I want to choose which pages are converted before starting
+
+- **Priority:** P1 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#78](https://github.com/Josh-Uvi/DrawLift/issues/78)
+- **Acceptance Criteria:**
+  - [ ] Upload flow shows numbered page thumbnails with select all/none
+  - [ ] `config.pages` is validated (1-based, unique, within page count and plan limits)
+  - [ ] Worker converts only selected pages
+  - [ ] Job detail records the selected pages
+  - [ ] Invalid selections return actionable 422 errors
+- **Tasks:**
+  - [ ] T-182 — Add page-list validation to `JobConfig` and a pre-check endpoint
+  - [ ] T-183 — Honor selected pages in the parser step/orchestrator
+  - [ ] T-184 — Build page selector UI in the upload flow
+  - [ ] T-185 — Add validation and pipeline filtering tests
+
+## Epic 8.3 — Quality, Notifications, and Launch
+
+### US-052 · As a user, I want the UI to feel polished: consistent empty, loading, and error states
+
+- **Priority:** P2 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#79](https://github.com/Josh-Uvi/DrawLift/issues/79)
+- **Acceptance Criteria:**
+  - [ ] Shared `StatusBadge` consolidates status colors and text labels everywhere
+  - [ ] Skeleton loaders on history and job pages
+  - [ ] Empty states with a primary CTA
+  - [ ] Error states offer retry where applicable
+  - [ ] Accessibility audit pass: focus order, ARIA labels, keyboard-dismissable modals, contrast
+  - [ ] Status color tokens documented in `docs/design-system.md`
+- **Tasks:**
+  - [ ] T-186 — Create shared `StatusBadge` and replace ad-hoc badges
+  - [ ] T-187 — Add skeleton/empty/error state components and wire pages
+  - [ ] T-188 — Accessibility audit pass
+  - [ ] T-189 — Update design-system doc and visual spot-checks
+
+### US-053 · As a user, I want email notifications when my conversions finish or fail
+
+- **Priority:** P2 · **Effort:** M · **Status:** 🟦 Todo · **Labels:** `area:backend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#80](https://github.com/Josh-Uvi/DrawLift/issues/80)
+- **Acceptance Criteria:**
+  - [ ] Notifier abstraction with console (dev default) and SMTP providers
+  - [ ] Job complete/failed emails include time-limited tokenised download links
+  - [ ] Per-user notification toggle stored on the profile
+  - [ ] Failed emails include the friendly error and a retry link
+  - [ ] Delivery failures never fail the job
+- **Tasks:**
+  - [ ] T-190 — Build notifier abstraction and SMTP provider
+  - [ ] T-191 — Add tokenised download endpoint for email links
+  - [ ] T-192 — Add notification preference toggle to profile and API
+  - [ ] T-193 — Add tests for content, toggle, and failure isolation
+
+### US-054 · As an ML engineer, I want trained segmentation weights hosted with an evaluation harness
+
+- **Priority:** P1 · **Effort:** L · **Status:** 🟦 Todo · **Labels:** `area:ml`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#81](https://github.com/Josh-Uvi/DrawLift/issues/81)
+- **Acceptance Criteria:**
+  - [ ] Candidate trained weights converted to the segmenter's 5-class contract
+  - [ ] `make validate-model` runs a regression fixture set of 3+ floor plan images
+  - [ ] Evaluation reports per-class IoU
+  - [ ] Selected weights are provisionable via `SEGMENTER_MODEL_URL`
+  - [ ] `docs/pipeline.md` refreshed with measured comparison, baselines, and known failure modes
+- **Tasks:**
+  - [ ] T-194 — Convert candidate model to the 5-class contract
+  - [ ] T-195 — Build evaluation harness and fixture corpus
+  - [ ] T-196 — Wire evaluation into `make validate-model` and CI smoke
+  - [ ] T-197 — Update `docs/pipeline.md` with measured comparison
+
+### US-055 · As a user, I want one-click access to every output my job produced
+
+- **Priority:** P2 · **Effort:** S · **Status:** 🟦 Todo · **Labels:** `area:backend`, `area:frontend`, `type:feature`, `epic:p8-saas-billing` · **Issue:** [#82](https://github.com/Josh-Uvi/DrawLift/issues/82)
+- **Acceptance Criteria:**
+  - [ ] `GET /jobs/{id}/download?format=zip` streams an archive of all available artifacts plus a job settings README
+  - [ ] Download UI lists each format's availability and size
+  - [ ] Buttons are disabled for missing artifacts with explanation copy
+  - [ ] Filenames include the job id and configuration hints
+- **Tasks:**
+  - [ ] T-198 — Add zip bundle endpoint with availability checks
+  - [ ] T-199 — Add download UI availability listing
+  - [ ] T-200 — Add bundle content and missing-artifact tests
+
+### US-056 · As an operator, I want a documented launch checklist and day-2 runbook
+
+- **Priority:** P3 · **Effort:** S · **Status:** 🟦 Todo · **Labels:** `area:docs`, `type:chore`, `epic:p8-saas-billing` · **Issue:** [#83](https://github.com/Josh-Uvi/DrawLift/issues/83)
+- **Acceptance Criteria:**
+  - [ ] `docs/launch-checklist.md` covers DNS/TLS, secrets rotation, backups, DR smoke test, monitoring verification, per-plan rate limits, and support contacts
+  - [ ] `docs/runbook.md` covers common incidents with actionable commands
+  - [ ] README links both documents
+- **Tasks:**
+  - [ ] T-201 — Write `docs/launch-checklist.md`
+  - [ ] T-202 — Write `docs/runbook.md` and add README links
+
+---
+
+# Appendix A — GitHub Issue Management (via `gh` CLI & GitHub MCP)
+
+All implementation work is tracked as **GitHub Issues** on the project repo. Two equivalent ways to manage them: the **GitHub CLI (`gh`)** from the terminal, or the **GitHub MCP server** from inside an AI agent (e.g. Cline, Claude Desktop, Cursor).
+
+> **Status (this repo):** the project board, 28 user-story issues, 6 milestones, all labels, and the auto-sync workflows are already in place. See the **AI File Converter** project: https://github.com/users/Josh-Uvi/projects/1
+>
+> The exact one-shot scripts used to bootstrap everything from scratch live in `scripts/` (`bootstrap-github.sh`, `create-issues.py` + `stories.json`, `add-to-project.py`).
+
+## A.0 Live state of this repo
+
+| Resource                   | Where                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| Project board              | https://github.com/users/Josh-Uvi/projects/1 (Status: `Todo` / `In Progress` / `Done`) |
+| Milestones (one per stage) | `Stage 0: Bootstrap` -> `Stage 5: Polish & DWG` (6 total)                              |
+| User-story issues          | `#1` ... `#28` (one per `US-###` defined below)                                        |
+| Parent tracking issue      | `#29` - "AI File Converter - PDF to DWG (project root)"                                |
+| Auto-sync workflow         | `.github/workflows/project-sync.yml`                                                   |
+| CI workflow                | `.github/workflows/ci.yml`                                                             |
+
+## A.6 Automation: workflows on push and PR
+
+Two GitHub Actions workflows drive the board. Both run automatically on every push to `main` and on every pull request.
+
+**`ci.yml`** - Lint + Docker build validation (3 parallel jobs: `backend`, `frontend`, `docker`).
+
+**`project-sync.yml`** - The key board automation. It listens for `issues`, `pull_request`, and `push` events and, via the GraphQL API, moves the linked card to the correct Status column:
+
+| Event                                                                 | Card moves to                         |
+| --------------------------------------------------------------------- | ------------------------------------- |
+| Issue `opened` / `reopened`                                           | `Todo`                                |
+| Pull request `opened` / `synchronize`                                 | `In Progress`                         |
+| Issue `closed`                                                        | `Done`                                |
+| Pull request `closed` (merged or not)                                 | `Done`                                |
+| Push to `main` whose commit message contains `Closes #N` / `Fixes #N` | `Done` (and the issue is auto-closed) |
+
+The default `GITHUB_TOKEN` is sufficient. If your org requires finer-grained permissions, add a `PROJECT_TOKEN` secret (PAT with `project` scope) and the workflow will prefer it.
+
+## A.10 Daily developer flow (with the automation in place)
+
+```bash
+# 1. Pick an issue and create a feature branch
+gh issue list --label "epic:p1-scaffold" --state open
+git checkout -b feat/9-landing-dropzone      # 9 = US-009 issue number
+
+# 2. Implement, commit with the auto-close keyword
+git commit -m "feat(frontend): landing dropzone
+
+Closes #9"
+
+# 3. Push and open a PR (project-sync.yml moves #9 to In Progress)
+git push origin feat/9-landing-dropzone
+gh pr create --base main --title "[US-009] Landing dropzone" --body "Closes #9"
+
+# 4. Merge the PR (project-sync.yml moves #9 to Done and closes it)
+gh pr merge --squash
+```
+
+No manual card dragging required.
+
+## A.1 One-Time Setup
+
+```bash
+# 1. Install GitHub CLI (macOS)
+brew install gh
+
+# 2. Authenticate
+gh auth login
+
+# 3. Verify access to the project repo
+gh repo view
+```
+
+## A.2 Mapping our Hierarchy → GitHub Concepts
+
+| Our concept                 | GitHub equivalent                                         |
+| --------------------------- | --------------------------------------------------------- |
+| Stage (0–5)                 | **Milestone**                                             |
+| Epic (e.g. 0.1, 1.1)        | **Label** (`epic:p1-scaffold`, etc.)                      |
+| User Story (US-001 …)       | **Issue** with title prefix `[US-001]`                    |
+| Acceptance Criteria / Tasks | **Markdown checkboxes inside the issue body**             |
+| Priority (P0–P3)            | **Label** `priority:p0` … `priority:p3`                   |
+| Area / Type                 | **Labels** `area:backend`, `type:feature`, etc.           |
+| Status                      | **Project board column** or **Issue state** (open/closed) |
+| Cycle / Sprint              | **Milestone due date** or **GitHub Project iteration**    |
+
+## A.3 Bootstrap the Repo (Labels, Milestones, First Issues)
+
+```bash
+# --- Create labels (one shot) ---
+for label in \
+  "area:frontend" "area:backend" "area:devops" "area:ml" "area:docs" \
+  "type:bug" "type:chore" "type:spike" "type:feature" \
+  "epic:p1-scaffold" "epic:p2-pdf" "epic:p3-vectorize" "epic:p4-3d" "epic:p5-polish" \
+  "epic:p6-ml-dwg" "epic:p7-production" "epic:p8-saas-billing" \
+  "priority:p0" "priority:p1" "priority:p2" "priority:p3" \
+  "status:blocked" "status:in-review"; do
+    gh label create "$label" --color "0E8A16" --description "Auto-generated" 2>/dev/null || true
+done
+
+# --- Create milestones (one per Stage) ---
+for stage in "Stage 0: Bootstrap" "Stage 1: MVP Skeleton" "Stage 2: PDF Parsing" \
+             "Stage 3: 2D Vectorization" "Stage 4: 3D Extrusion" "Stage 5: Polish & DWG"; do
+    gh milestone create "$stage" --description "From TODO.md"
+done
+
+# --- Create the parent tracking issue (one per project) ---
+gh issue create \
+  --title "🎯 AI File Converter — PDF to DWG (project root)" \
+  --body "Tracks the full build-out defined in README.md and TODO.md. See **Milestones** for stage-level breakdown." \
+  --label "area:docs,type:feature"
+```
+
+## A.4 Create an Issue per User Story
+
+The body of each issue should mirror the user story from `TODO.md`. Use a small bash loop or a script (`scripts/create-issues.sh`) to generate them in bulk.
+
+```bash
+gh issue create \
+  --title "[US-001] Monorepo layout with frontend/ and backend/" \
+  --milestone "Stage 0: Bootstrap" \
+  --label "area:devops,type:chore,epic:p1-scaffold,priority:p0" \
+  --body "$(cat <<'EOF'
+## Context
+Bootstrap the repository so that all subsequent stages can be developed in isolation.
+
+## Acceptance Criteria
+- [ ] `frontend/` and `backend/` directories created
+- [ ] Root `.gitignore` covers Node, Python, IDE, OS files
+- [ ] Root `README.md` links to `TODO.md` and architecture doc
+- [ ] `LICENSE` file present
+
+## Tasks
+- [ ] T-001 — Create `frontend/` and `backend/` directories
+- [ ] T-002 — Write root `.gitignore`
+- [ ] T-003 — Add `LICENSE` (MIT recommended for POC)
+- [ ] T-004 — Update README to reference TODO.md
+
+## Definition of Done
+- [ ] All acceptance criteria checked
+- [ ] Lint passes
+- [ ] PR merged to `main` (e.g. `Closes #1`)
+EOF
+)"
+```
+
+### Bulk-create from `TODO.md`
+
+```bash
+# Extract US-### titles from TODO.md and create an issue per story
+grep -E '^### US-[0-9]+' TODO.md | sed -E 's/^### (US-[0-9]+) · (.*)$/[\1] \2/' \
+  | while read -r line; do
+      gh issue create --title "$line" --label "area:backend,epic:p1-scaffold"
+    done
+```
+
+## A.5 Working with Issues (Daily Flow)
+
+```bash
+# List your open issues
+gh issue list --assignee @me --state open
+
+# View a specific issue
+gh issue view 12
+
+# Add a comment / progress update
+gh issue comment 12 --body "Blocked on T-008. Pinging @teammate."
+
+# Close an issue (with auto-close via PR keywords)
+gh pr create --title "[US-001] Monorepo layout" --body "Closes #12" --base main
+```
+
+## A.6 Project Board (GitHub Projects v2)
+
+```bash
+# Create a project (web) then link issues to it
+gh project create --title "AI File Converter" --owner <org-or-user>
+
+# Add an issue to a project (item id from web URL)
+gh project item-add <project-number> --owner <owner> --url <issue-url>
+```
+
+Typical columns: **Backlog → Todo → In Progress → In Review → Done**.
+
+## A.7 Branch ↔ Issue Auto-Linking
+
+GitHub auto-links branches & PRs when the branch name or PR title contains the issue number.
+
+```bash
+# Branch name pattern: <type>/<issue-number>-<short-desc>
+git checkout -b feat/12-monorepo-layout
+
+# PR title pattern: closes the issue
+gh pr create --title "[US-001] Monorepo layout" --body "Closes #12"
+```
+
+## A.8 Using the GitHub MCP Server (for AI agents)
+
+When Cline, Claude Desktop, or another MCP-compatible client has the **GitHub MCP server** enabled, the same workflow runs from the chat:
+
+| Action           | MCP tool call (pseudocode)                                      |
+| ---------------- | --------------------------------------------------------------- |
+| Create issue     | `mcp_github_create_issue({ title, body, labels, milestone })`   |
+| List my issues   | `mcp_github_list_issues({ assignee: "me", state: "open" })`     |
+| Comment on issue | `mcp_github_add_issue_comment({ issue_number, body })`          |
+| Update labels    | `mcp_github_update_issue({ issue_number, labels: [...] })`      |
+| Create PR        | `mcp_github_create_pull_request({ title, body, head, base })`   |
+| Search code      | `mcp_github_search_code({ q: "repo:owner/name PipelineStep" })` |
+
+The GitHub MCP server mirrors the `gh` CLI surface, so the bulk-creation script in §A.4 can be reproduced in a single agent prompt.
+
+## A.9 Suggested Milestone Plan
+
+| Milestone                     | Stories         | Goal                             |
+| ----------------------------- | --------------- | -------------------------------- |
+| **Stage 0: Bootstrap**        | US-001 → US-004 | Repo, tooling, CI scaffold       |
+| **Stage 1: MVP Skeleton**     | US-005 → US-011 | Upload + queue + job tracking    |
+| **Stage 2: PDF Parsing**      | US-012 → US-015 | Extract & preview page images    |
+| **Stage 3: 2D Vectorization** | US-016 → US-020 | PDF → DXF (core value)           |
+| **Stage 4: 3D Extrusion**     | US-021 → US-024 | Walls → 3D model                 |
+| **Stage 5: Polish & DWG**     | US-025 → US-028 | Production-ready with DWG export |
+| **Stage 6: ML Model & DWG**   | US-029 → US-032 | ONNX model + libredwg sidecar    |
+| **Stage 7: Production Core**  | US-033 → US-044 | Security, tenancy, storage, observability, deployment, compliance |
+| **Stage 8: SaaS Product & Billing** | US-045 → US-056 | Plans, Stripe, metering, experience, launch docs |
+
+---
+
+# Appendix B — Definition of Done
+
+A user story is considered **Done** when:
+
+- [ ] All acceptance criteria checkboxes are ticked
+- [ ] All linked tasks (T-XXX) are completed
+- [ ] Code passes linting (`ruff check` / `eslint`)
+- [ ] Unit tests exist and pass (`pytest` / `vitest`)
+- [ ] Feature is manually verified in `docker compose up` environment
+- [ ] PR is merged to `main` with the GitHub issue number referenced (e.g. `Closes #12`)
+- [ ] `CHANGELOG.md` updated (if user-facing change)
+- [ ] Issue moved to **Done** column on the GitHub Project board
+
+---
+
+# Appendix C — Dependency Graph (Stage → Story)
+
+```
+Stage 0 (Bootstrap)
+  └── US-001 ── US-002 ── US-003 ── US-004
+                    │
+Stage 1 (MVP)       ▼
+  └── US-005 ── US-006 ── US-007 ── US-008 ── US-009 ── US-010 ── US-011
+                                                          │
+Stage 2 (PDF)                                              ▼
+  └── US-012 ── US-013 ── US-014 ── US-015
+                    │
+Stage 3 (Vectorize)  ▼
+  └── US-016 ── US-017 ── US-018 ── US-019 ── US-020
+                                               │
+Stage 4 (3D)                                    ▼
+  └── US-021 ── US-022 ── US-023 ── US-024
+                                       │
+Stage 5 (Polish)                      ▼
+  └── US-025 ── US-026 ── US-027 ── US-028
+                                       │
+Stage 6 (ML & DWG)                    ▼
+  └── US-029 ── US-030 ── US-031 ── US-032
+                                       │
+Stage 7 (Production Core)              ▼
+  └── US-033 ── US-034 ── US-035 ── US-036 ── US-037 ── US-038 ── US-039 ── US-040 ── US-041 ── US-042 ── US-043 ── US-044
+                                       │
+Stage 8 (SaaS & Billing)               ▼
+  └── US-045 ── US-046 ── US-047 ── US-048 ── US-049 ── US-050 ── US-051 ── US-052 ── US-053 ── US-054 ── US-055 ── US-056
+```
+
+---
+
+_Document version 2.0 — updated 2026-08-25: Added Stage 7 — Production Core (US-033 → US-044) and Stage 8 — SaaS Product & Billing (US-045 → US-056), with 95 new tasks (T-108 → T-202) covering auth, multi-tenancy, security hardening, object storage, observability, job cancellation, production deployment, compliance, plans/entitlements, Stripe billing, usage metering, account onboarding, UX polish, ML evaluation harness, and launch runbook docs. US-001 → US-032 done; US-033 → US-056 🟦 Todo._
